@@ -1,6 +1,6 @@
 # Zendesk AI Agent
 
-A simple Python project to interact with the Zendesk API and fetch tickets and their comments.
+A simple Python project to interact with the Zendesk and use chatgtp to summarize ticket comments and suggest next actions.
 
 ## Setup
 
