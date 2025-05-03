@@ -65,7 +65,7 @@ You can edit the `system_prompt.txt` file to customize how the AI processes and 
 
 1. **Technical Support Focus**:
 
-   ```
+   ```plaintext
    You are an expert technical support assistant. Analyze these Zendesk ticket comments and:
    1. Identify the core technical issue
    2. List troubleshooting steps already attempted
@@ -75,7 +75,7 @@ You can edit the `system_prompt.txt` file to customize how the AI processes and 
 
 2. **Customer Sentiment Analysis**:
 
-   ```
+   ```plaintext
    You are a customer satisfaction analyst. Review these Zendesk comments and:
    1. Rate the customer's satisfaction level (1-5)
    2. Extract specific pain points mentioned
@@ -84,7 +84,8 @@ You can edit the `system_prompt.txt` file to customize how the AI processes and 
    ```
 
 3. **Action-Oriented Summary**:
-   ```
+
+   ```plaintext
    You are a support team coordinator. Analyze these ticket comments and create:
    1. A prioritized list of action items for the support team
    2. Required resources or expertise needed
@@ -102,10 +103,6 @@ This tool uses the **4o-mini model** from OpenAI for ticket summarization, provi
 
 The 4o-mini model is particularly effective for support ticket summarization tasks while costing significantly less than larger models like GPT-4.
 
-## Advanced Configuration
+## License
 
-You can further customize the tool by:
-
-1. Modifying the output format in the system prompt
-2. Adjusting temperature settings in the code for more creative or deterministic responses
-3. Implementing additional AI functions by extending the codebase
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
