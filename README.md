@@ -1,6 +1,6 @@
 # Zendesk AI Agent
 
-A simple Python project to interact with the Zendesk and use chatgtp to summarize ticket comments and suggest next actions.
+A simple Python project to interact with the Zendesk and use AI to summarize ticket comments and suggest next actions.
 
 ## Setup
 
@@ -22,7 +22,8 @@ A simple Python project to interact with the Zendesk and use chatgtp to summariz
    ZENDESK_SUBDOMAIN=your_subdomain
    ZENDESK_EMAIL=your_email
    ZENDESK_API_TOKEN=your_api_token
-   OPENAI_API_KEY=your_openai_api_key  # Add your OpenAI API key for comment summarization
+   OPENAI_API_KEY=your_openai_api_key  # Required only if using OpenAI as provider
+   OLLAMA_URL=http://localhost:11434   # Optional: URL for Ollama API (defaults to localhost:11434)
    ```
 
 ## Usage
@@ -32,7 +33,7 @@ Run the CLI:
 ```bash
 python main.py tickets [--status STATUS]
 python main.py comments TICKET_ID
-python main.py summarize TICKET_ID  # Summarize comments for a ticket using ChatGPT
+python main.py summarize TICKET_ID [--provider {ollama|openai}] [--model MODEL_NAME]
 ```
 
 Examples:
@@ -44,9 +45,38 @@ python main.py tickets --status open
 # Fetch comments for ticket #123
 python main.py comments 123
 
-# Summarize comments for ticket #123
+# Summarize comments for ticket #123 (default: uses Ollama with llama3.2)
 python main.py summarize 123
+
+# Summarize using Ollama with a specific model
+python main.py summarize 123 --model llama3
+
+# Summarize using OpenAI
+python main.py summarize 123 --provider openai
+
+# Summarize using OpenAI with a specific model
+python main.py summarize 123 --provider openai --model gpt-4
 ```
+
+## AI Provider Options
+
+The Zendesk AI Agent supports multiple AI provider options:
+
+### Ollama (Default)
+
+By default, the application uses Ollama with the `llama3.2` model, which provides local inference without requiring external API calls. This is ideal for:
+
+- Maintaining data privacy by keeping all processing local
+- Eliminating API costs
+- Working in environments with limited or no internet connectivity
+
+### OpenAI
+
+For cases where you need increased capability, you can use OpenAI's models:
+
+- Higher accuracy for complex summarization tasks
+- Better handling of nuanced customer sentiment
+- Access to more powerful models like GPT-4
 
 ## System Prompt
 
