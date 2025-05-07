@@ -7,31 +7,33 @@ from zendesk_client import ZendeskClient
 
 load_dotenv()  # load environment variables
 
-
-def generate_with_openai(prompt, system_prompt, model="gpt-4o-mini"):
-    """Generate response using OpenAI API"""
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+def generate_response(prompt, system_prompt, provider="ollama", model=None):
+    """Generate response using either OpenAI or Ollama API
     
-    response = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    return response.choices[0].message.content.strip()
-
-
-def generate_with_ollama(prompt, system_prompt, model="llama3.2"):
-    """Generate response using Ollama API via OpenAI client"""
-    ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
+    Args:
+        prompt (str): The user prompt
+        system_prompt (str): The system instructions
+        provider (str): 'openai' or 'ollama'
+        model (str): Model to use, defaults to provider-specific model if None
     
-    # Create OpenAI client configured for Ollama
-    client = OpenAI(
-        base_url=f"{ollama_url}/v1",
-        api_key="ollama", # Ollama doesn't need an API key, but the client requires one
-    )
+    Returns:
+        str: The generated response
+    """
+    # Set default models based on provider
+    if model is None:
+        model = "gpt-4o-mini" if provider == "openai" else "llama3.2"
     
+    # Configure client based on provider
+    if provider == "openai":
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    else:  # ollama
+        ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
+        client = OpenAI(
+            base_url=f"{ollama_url}/v1",
+            api_key="ollama",  # Ollama doesn't need an API key, but the client requires one
+        )
+    
+    # Try to generate the response
     try:
         response = client.chat.completions.create(
             model=model,
@@ -42,20 +44,25 @@ def generate_with_ollama(prompt, system_prompt, model="llama3.2"):
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        # Fall back to alternative Ollama API format if needed
-        client = OpenAI(
-            base_url=f"{ollama_url}/api",
-            api_key="ollama",
-        )
-        
-        response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt}
-            ]
-        )
-        return response.choices[0].message.content.strip()
+        # Only try the fallback for Ollama
+        if provider != "openai":
+            # Fall back to alternative Ollama API format if needed
+            client = OpenAI(
+                base_url=f"{ollama_url}/api",
+                api_key="ollama",
+            )
+            
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            return response.choices[0].message.content.strip()
+        else:
+            # Re-raise the exception for OpenAI errors
+            raise
 
 
 def main():
@@ -95,16 +102,9 @@ def main():
             system_prompt = f.read()
         
         provider = args.provider
+        model = args.model
         
-        if provider == 'openai':
-            # Use OpenAI API
-            model = args.model or "gpt-4o-mini"
-            summary = generate_with_openai(prompt, system_prompt, model)
-        else:  # ollama
-            # Use Ollama API
-            model = args.model or "llama3.2"
-            summary = generate_with_ollama(prompt, system_prompt, model)
-            
+        summary = generate_response(prompt, system_prompt, provider, model)
         print(summary)
 
 
