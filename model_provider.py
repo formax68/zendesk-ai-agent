@@ -101,25 +101,12 @@ class ModelProvider:
         Returns:
             str: The generated response
         """
-        # Append ticket analysis instructions to system prompt
-        try:
-            ticket_analysis_path = os.path.join(os.path.dirname(__file__), "ticket_analysis.txt")
-            if os.path.exists(ticket_analysis_path):
-                with open(ticket_analysis_path, 'r') as f:
-                    ticket_analysis = f.read()
-                enhanced_system_prompt = f"{system_prompt}\n\n{ticket_analysis}"
-            else:
-                enhanced_system_prompt = system_prompt
-        except Exception:
-            # If there's an issue reading the file, just use the original system prompt
-            enhanced_system_prompt = system_prompt
-            
         # Try to generate the response
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": enhanced_system_prompt},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
                 ]
             )
@@ -136,7 +123,7 @@ class ModelProvider:
                 response = fallback_client.chat.completions.create(
                     model=self.model,
                     messages=[
-                        {"role": "system", "content": enhanced_system_prompt},
+                        {"role": "system", "content": system_prompt},
                         {"role": "user", "content": prompt}
                     ]
                 )

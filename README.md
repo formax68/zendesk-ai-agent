@@ -34,6 +34,7 @@ Run the CLI:
 python main.py tickets [--status STATUS]
 python main.py comments TICKET_ID
 python main.py summarize TICKET_ID [--provider {ollama|openai}] [--model MODEL_NAME]
+python main.py chat [--provider {ollama|openai}] [--model MODEL_NAME]
 ```
 
 Examples:
@@ -56,6 +57,9 @@ python main.py summarize 123 --provider openai
 
 # Summarize using OpenAI with a specific model
 python main.py summarize 123 --provider openai --model gpt-4
+
+# Chat with the LLM (default: uses Ollama with llama3.2)
+python main.py chat
 ```
 
 ## AI Provider Options

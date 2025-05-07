@@ -83,27 +83,18 @@ def execute_command(args):
         # Initialize model provider
         model_provider = ModelProvider(args.provider, args.model)
         
-        # Define a chat function that converts the generator to a string
+        # Define a chat function that streams the response
         def chat_fn(message, history):
-            # Convert gradio history format to the format expected by model_provider
-            # Gradio history is a list of [user_message, assistant_response] pairs
-            model_history = []
-            for user_msg, assistant_msg in history:
-                model_history.append({"role": "user", "content": user_msg})
-                model_history.append({"role": "assistant", "content": assistant_msg})
-            
-            # Convert generator to final string result
-            response_generator = model_provider.chat(message, system_prompt, model_history)
-            final_response = ""
-            for response in response_generator:
-                final_response = response  # Will get the last yielded value
-            
-            return final_response
+            # The history will already be in the format with 'role' and 'content' keys
+            # when type='messages' is set in the ChatInterface
+            for response in model_provider.chat(message, system_prompt, history):
+                yield response
         
         # Launch Gradio chat interface
         print("Starting chat interface")
         gr.ChatInterface(
             fn=chat_fn,
             title="Zendesk Agent - Chat",
-            description="Chat with the AI assistant"
+            description="Chat with the AI assistant",
+            type="messages"  # Use the new messages format instead of tuples
         ).launch()
