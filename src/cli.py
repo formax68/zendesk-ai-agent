@@ -2,8 +2,8 @@ import argparse
 import json
 import os
 import gradio as gr
-from src.zendesk_client import ZendeskClient
-from src.model_provider import ModelProvider
+from zendesk_client import ZendeskClient
+from model_provider import ModelProvider
 
 def setup_cli():
     """Set up and return the argument parser for the CLI"""
