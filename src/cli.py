@@ -88,13 +88,13 @@ def execute_command(args):
             # The history will already be in the format with 'role' and 'content' keys
             # when type='messages' is set in the ChatInterface
             for response in model_provider.chat(message, system_prompt, history):
-                yield response
+                yield {"role": "assistant", "content": response}
         
         # Launch Gradio chat interface
         print("Starting chat interface")
         gr.ChatInterface(
             fn=chat_fn,
             title="Zendesk Agent - Chat",
-            description="Chat with the AI assistant",
+            description="Chat with the Zendesk AI assistant",
             type="messages"  # Use the new messages format instead of tuples
         ).launch()
