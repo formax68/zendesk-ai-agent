@@ -83,18 +83,52 @@ def execute_command(args):
         # Initialize model provider
         model_provider = ModelProvider(args.provider, args.model)
         
-        # Define a chat function that streams the response
-        def chat_fn(message, history):
-            # The history will already be in the format with 'role' and 'content' keys
-            # when type='messages' is set in the ChatInterface
-            for response in model_provider.chat(message, system_prompt, history):
-                yield {"role": "assistant", "content": response}
+        # Define function to handle chat interactions
+        def user_message(message, history):
+            # Add user message to history
+            history.append({"role": "user", "content": message})
+            return "", history
         
-        # Launch Gradio chat interface
+        # Define a function that streams the response
+        def bot_message(history):
+            # Get the last user message
+            user_msg = history[-1]["content"]
+            # Remove the last user message from history for generating response
+            response_history = history[:-1]
+            
+            # Create assistant response placeholder
+            history.append({"role": "assistant", "content": ""})
+            
+            # Generate streaming response
+            for partial_response in model_provider.chat(user_msg, system_prompt, response_history):
+                # Update the last message (assistant's message)
+                history[-1]["content"] = partial_response
+                yield history
+        
+        # Launch Gradio blocks interface
         print("Starting chat interface")
-        gr.ChatInterface(
-            fn=chat_fn,
-            title="Zendesk Agent - Chat",
-            description="Chat with the Zendesk AI assistant",
-            type="messages"  # Use the new messages format instead of tuples
-        ).launch()
+        with gr.Blocks(title="Zendesk Agent - Chat") as demo:
+            gr.Markdown("# Zendesk Agent - Chat")
+            gr.Markdown("Chat with the Zendesk AI assistant")
+            
+            # Create chatbot component
+            chatbot = gr.Chatbot(type="messages")
+            
+            # Create message input
+            msg = gr.Textbox(placeholder="Type your message here...", scale=4)
+            
+            # Create clear button
+            clear = gr.ClearButton([msg, chatbot])
+            
+            # Set up event handlers
+            msg.submit(
+                user_message, 
+                [msg, chatbot], 
+                [msg, chatbot]
+            ).then(
+                bot_message,
+                chatbot,
+                chatbot
+            )
+            
+        demo.launch()
