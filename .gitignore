@@ -2,4 +2,4 @@
 __pycache__/
 *.pyc
 venv/
-system_prompt.txt
+config/system_prompt.txt

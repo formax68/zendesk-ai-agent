@@ -1,4 +1,4 @@
-from cli import setup_cli, execute_command
+from src.cli import setup_cli, execute_command
 
 def main():
     parser = setup_cli()

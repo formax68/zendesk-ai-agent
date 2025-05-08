@@ -2,8 +2,8 @@ import argparse
 import json
 import os
 import gradio as gr
-from zendesk_client import ZendeskClient
-from model_provider import ModelProvider
+from src.zendesk_client import ZendeskClient
+from src.model_provider import ModelProvider
 
 def setup_cli():
     """Set up and return the argument parser for the CLI"""
@@ -66,7 +66,7 @@ def execute_command(args):
         prompt = "Summarize the following ticket comments:\n" + "\n".join(bodies)
         
         # Load system prompt for role guidance
-        with open(os.path.join(os.path.dirname(__file__), "system_prompt.txt"), 'r') as f:
+        with open(os.path.join(os.path.dirname(__file__), "../config/system_prompt.txt"), 'r') as f:
             system_prompt = f.read()
         
         provider = args.provider
@@ -77,7 +77,7 @@ def execute_command(args):
     
     elif args.command == 'chat':
         # Load system prompt for role guidance
-        with open(os.path.join(os.path.dirname(__file__), "system_prompt.txt"), 'r') as f:
+        with open(os.path.join(os.path.dirname(__file__), "../config/system_prompt.txt"), 'r') as f:
             system_prompt = f.read()
         
         # Initialize model provider
