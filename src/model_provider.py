@@ -45,10 +45,14 @@ class ModelProvider:
             history (list): Previous conversation history
             
         Yields:
-            str: Incrementally generated response text
+            dict: {'reasoning_content': str or None, 'content': str}
         """
         messages = [{"role": "system", "content": system_prompt}] + history + [{"role": "user", "content": message}]
         
+        def is_qwen3():
+            # crude check for Qwen3 model name
+            return "qwen" in self.model.lower() or "qwen3" in self.model.lower()
+
         try:
             stream = self.client.chat.completions.create(
                 model=self.model, 
@@ -57,39 +61,56 @@ class ModelProvider:
             )
 
             response = ""
+            reasoning = ""
             for chunk in stream:
-                if chunk.choices and chunk.choices[0].delta.content is not None:
-                    response += chunk.choices[0].delta.content
-                    yield response
-                    
+                # Qwen3 returns reasoning_content and content separately in delta
+                delta = getattr(chunk.choices[0], "delta", None)
+                if is_qwen3() and delta:
+                    # Qwen3: delta may have reasoning_content and content
+                    if hasattr(delta, "reasoning_content") and delta.reasoning_content is not None:
+                        reasoning += delta.reasoning_content
+                        yield {"reasoning_content": reasoning, "content": response}
+                    if hasattr(delta, "content") and delta.content is not None:
+                        response += delta.content
+                        yield {"reasoning_content": reasoning if reasoning else None, "content": response}
+                else:
+                    # Other models: just content
+                    if delta and getattr(delta, "content", None) is not None:
+                        response += delta.content
+                        yield {"content": response}
+        
         except Exception as e:
             # Only try the fallback for Ollama
             if self.provider != "openai":
                 try:
-                    # Fall back to alternative Ollama API format
                     fallback_client = OpenAI(
                         base_url=f"{self.ollama_url}/api",
                         api_key="ollama",
                     )
-                    
                     stream = fallback_client.chat.completions.create(
                         model=self.model,
                         messages=messages,
                         stream=True
                     )
-                    
                     response = ""
+                    reasoning = ""
                     for chunk in stream:
-                        if chunk.choices and chunk.choices[0].delta.content is not None:
-                            response += chunk.choices[0].delta.content
-                            yield response
-                            
+                        delta = getattr(chunk.choices[0], "delta", None)
+                        if is_qwen3() and delta:
+                            if hasattr(delta, "reasoning_content") and delta.reasoning_content is not None:
+                                reasoning += delta.reasoning_content
+                                yield {"reasoning_content": reasoning, "content": response}
+                            if hasattr(delta, "content") and delta.content is not None:
+                                response += delta.content
+                                yield {"reasoning_content": reasoning if reasoning else None, "content": response}
+                        else:
+                            if delta and getattr(delta, "content", None) is not None:
+                                response += delta.content
+                                yield {"content": response}
                 except Exception as fallback_error:
-                    # If fallback also fails, yield error message
-                    yield f"Error generating response: {str(fallback_error)}"
+                    yield {"content": f"Error generating response: {str(fallback_error)}"}
             else:
-                # For OpenAI, yield the error message
-                yield f"Error generating response: {str(e)}"
+                yield {"content": f"Error generating response: {str(e)}"}
 
     def generate_response(self, prompt, system_prompt):
         """Generate response using the configured provider and model

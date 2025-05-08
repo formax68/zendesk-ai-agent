@@ -98,11 +98,20 @@ def execute_command(args):
             
             # Create assistant response placeholder
             history.append({"role": "assistant", "content": ""})
-            
+            last_reasoning = None
+            last_content = ""
             # Generate streaming response
-            for partial_response in model_provider.chat(user_msg, system_prompt, response_history):
-                # Update the last message (assistant's message)
-                history[-1]["content"] = partial_response
+            for resp in model_provider.chat(user_msg, system_prompt, response_history):
+                # resp is a dict: {"reasoning_content": ..., "content": ...} or {"content": ...}
+                reasoning = resp.get("reasoning_content")
+                content = resp.get("content", "")
+                last_content = content
+                # Compose display: show reasoning (if present) above answer
+                if reasoning:
+                    display = f"<div style='color: #888'><b>Thinking:</b><br>{reasoning}</div>\n---\n{content}"
+                else:
+                    display = content
+                history[-1]["content"] = display
                 yield history
         
         # Launch Gradio blocks interface
