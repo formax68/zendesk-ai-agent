@@ -48,10 +48,6 @@ class ModelProvider:
             dict: {'reasoning_content': str or None, 'content': str}
         """
         messages = [{"role": "system", "content": system_prompt}] + history + [{"role": "user", "content": message}]
-        
-        def is_qwen3():
-            # crude check for Qwen3 model name
-            return "qwen" in self.model.lower() or "qwen3" in self.model.lower()
 
         try:
             stream = self.client.chat.completions.create(
@@ -63,10 +59,9 @@ class ModelProvider:
             response = ""
             reasoning = ""
             for chunk in stream:
-                # Qwen3 returns reasoning_content and content separately in delta
                 delta = getattr(chunk.choices[0], "delta", None)
-                if is_qwen3() and delta:
-                    # Qwen3: delta may have reasoning_content and content
+                if delta:
+                    # Always check for reasoning_content and content if present
                     if hasattr(delta, "reasoning_content") and delta.reasoning_content is not None:
                         reasoning += delta.reasoning_content
                         yield {"reasoning_content": reasoning, "content": response}
@@ -74,7 +69,7 @@ class ModelProvider:
                         response += delta.content
                         yield {"reasoning_content": reasoning if reasoning else None, "content": response}
                 else:
-                    # Other models: just content
+                    # Fallback: just content
                     if delta and getattr(delta, "content", None) is not None:
                         response += delta.content
                         yield {"content": response}
@@ -96,7 +91,7 @@ class ModelProvider:
                     reasoning = ""
                     for chunk in stream:
                         delta = getattr(chunk.choices[0], "delta", None)
-                        if is_qwen3() and delta:
+                        if delta:
                             if hasattr(delta, "reasoning_content") and delta.reasoning_content is not None:
                                 reasoning += delta.reasoning_content
                                 yield {"reasoning_content": reasoning, "content": response}
